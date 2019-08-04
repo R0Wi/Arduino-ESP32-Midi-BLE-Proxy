@@ -1,0 +1,3 @@
+[submodule "lib/MIDI-BLE"]
+	path = lib/MIDI-BLE
+	url = https://github.com/R0Wi/Arduino-BLE-MIDI.git
