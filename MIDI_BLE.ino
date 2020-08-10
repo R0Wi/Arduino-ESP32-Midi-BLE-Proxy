@@ -1,5 +1,5 @@
 #include "lib/MIDI-BLE/src/BleMidi.h" 
-#include <MIDI.h>
+#include "lib/MIDI-library/src/MIDI.h"
 #include <HardwareSerial.h>
 
 #define LED 2
