@@ -1,5 +1,9 @@
-#include <MIDI.h>
-#include <HardwareSerial.h>
+
+// Uncomment to get debug output via USB serial
+#define DEBUG
+
+// BLE libs come from ESP32 board repo
+// https://github.com/espressif/arduino-esp32
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
@@ -11,17 +15,18 @@
 #define RXD2 16
 #define TXD2 17
 
+// As specified in
+// Specification for MIDI over Bluetooth Low Energy (BLE-MIDI)
+// Version 1.0a, NOvember 1, 2015
+// 3. BLE Service and Characteristics Definitions
 #define SERVICE_UUID "03b80e5a-ede8-4b33-a751-6ce34ec4c700"
 #define CHARACTERISTIC_UUID "7772e5db-3868-4112-a1a9-f2669d106bf3"
 
-bool debug = false;
 int numClients = 0;
 
 BLEServer *_server = nullptr;
 BLEAdvertising *_advertising = nullptr;
 BLECharacteristic *_characteristic = nullptr;
-
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial2, MIDI);
 
 // -----------------------------------------------------------------------------
 //  FUNCTIONS
@@ -36,10 +41,9 @@ void ledState(bool state)
 
 void debugOutput(String output)
 {
-  if (debug)
-  {
-    Serial.println(output);
-  }
+  #ifdef DEBUG
+  Serial.println(output);
+  #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -47,14 +51,14 @@ void debugOutput(String output)
 // -----------------------------------------------------------------------------
 class MyServerCallbacks : public BLEServerCallbacks
 {
-  void onConnect(BLEServer *_server)
+  void onConnect(BLEServer *pServer, esp_ble_gatts_cb_param_t *param)
   {
     numClients++;
     debugOutput("NumClients: " + String(numClients));
     ledState(numClients > 0);
   };
 
-  void onDisconnect(BLEServer *_server)
+  void onDisconnect(BLEServer *pServer)
   {
     if (numClients > 0)
       numClients--;
@@ -86,7 +90,11 @@ class MyCharacteristicCallbacks : public BLECharacteristicCallbacks
 void setup()
 {
   // Serial (USB) for debug output
+  #ifdef DEBUG
   Serial.begin(USB_MONITOR_BAUDRATE);
+  #endif
+
+  debugOutput("Begin setup");
 
   // Serial2 (GPIO 16 & 17) for hardware-midi in/out
   Serial2.begin(MIDI_BAUDRATE, SERIAL_8N1, RXD2, TXD2);
@@ -95,6 +103,8 @@ void setup()
   pinMode(LED, OUTPUT);
 
   // BLE Setup
+  // Highly inspired by
+  // https://github.com/lathoub/Arduino-BLE-MIDI/blob/aa0f6bc44aa59995fc91493a046959619efa9df5/src/hardware/BLEMIDI_ESP32.h#L113
   BLEDevice::init("BLE Midi Proxy");
   _server = BLEDevice::createServer();
   _server->setCallbacks(new MyServerCallbacks());
@@ -132,48 +142,4 @@ void loop()
     * Nothing to do here because
     * we're working with callbacks
     */
-}
-
-// ====================================================================================
-// Event handlers for incoming MIDI messages (via BLE)
-// ====================================================================================
-
-void onBleMidiConnected()
-{
-  numClients++;
-  debugOutput("NumClients: " + String(numClients));
-  ledState(numClients > 0);
-}
-
-void onBleMidiDisconnected()
-{
-  if (numClients > 0)
-    numClients--;
-  debugOutput("NumClients: " + String(numClients));
-  ledState(numClients > 0);
-}
-
-void onBleMidiControlChange(byte channel, byte number, byte value)
-{
-  debugOutput("ControlChange, Channel: " + String(channel) +
-              " number:" + String(number) +
-              " value:" + String(value));
-  MIDI.sendControlChange(number, value, channel);
-}
-
-void onBleMidiProgramChange(byte channel, byte number)
-{
-  debugOutput("ProgramChange, Channel: " + String(channel) +
-              " number:" + String(number));
-  MIDI.sendProgramChange(number, channel);
-}
-
-void onBleMidiNoteOn(byte channel, byte note, byte velocity)
-{
-  MIDI.sendNoteOn(note, velocity, channel);
-}
-
-void onBleMidiNoteOff(byte channel, byte note, byte velocity)
-{
-  MIDI.sendNoteOff(note, velocity, channel);
 }
