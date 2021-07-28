@@ -1,0 +1,3 @@
+[submodule "lib/blidino"]
+	path = lib/blidino
+	url = https://github.com/R0Wi/blidino.git
