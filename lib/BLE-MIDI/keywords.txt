@@ -1,0 +1,27 @@
+#######################################
+# Syntax Coloring Map for BLEMIDI
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+BLEMIDI_Transport.h	KEYWORD1
+BLEMIDI KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+setHandleConnected      KEYWORD2
+setHandleDisconnected   KEYWORD2
+
+#######################################
+# Instances (KEYWORD3)
+#######################################
+BLEMIDI KEYWORD3
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+# Namespace, considering it as a literal
+BLEMIDI	LITERAL1
